@@ -12,8 +12,7 @@ ClassMethod listClasses(ns As %String, projectName As %String)
     #dim project as %Studio.Project
     #dim status as %Status
 
-    // TODO: note sure what the "concurrency" parameter is; leave the default
-    // which is -1
+    // TODO: note sure what the "concurrency" parameter is; leave the default which is -1
     set project = ##class(%Studio.Project).%OpenId(projectName, /* default */, .status)
 
     if ('status) {
@@ -21,7 +20,16 @@ ClassMethod listClasses(ns As %String, projectName As %String)
         halt // meh... Ugly, f*ing ugly
     }
 
-    w project.Items
+    #dim item as %Studio.ProjectItem
+
+    set key = ""
+
+    do {
+        set item = project.Items.GetNext(.key)
+        if (item '= "") {
+            write "Name: " _ item.Name _ ", type: " _ item.Type, !
+        }
+    } while (key '= "")
 }
 
 ClassMethod main()
