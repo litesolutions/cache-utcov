@@ -8,7 +8,7 @@ ClassMethod m2()
 	set cfg = ##class(utcov.Configuration).%New()
 	
 	set cfg.namespace = "USER"
-	set cfg.projectName = "SonarQubeRulesTests"
+	set cfg.projectName = "cache-tort-git"
 	
 	#dim classLookup as utcov.ClassLookup
 	

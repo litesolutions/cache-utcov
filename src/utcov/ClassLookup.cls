@@ -83,33 +83,20 @@ Method addClassesFromPackage(pkg As %String)
 	#dim result as %SQL.StatementResult
 	
 	set result = ##class(%SQL.Statement).%ExecDirect(, 
-		"select name from %Dictionary.ClassDefinition where name %STARTSWITH ?",
+		"select id from %Dictionary.ClassDefinition where id %STARTSWITH ?",
 		pkg _ "."
 	)
 	
 	if (result.%SQLCODE) {
-		throw ##class(%Exception.General).%New("failed to retrieve list of classes from package" _ pkg,
-			result.%SQLCODE)
-	}
-	
-	if (result.%OutputColumnCount = 0) {
-		// FIXME... What to do here? That should not happen, right?
-		w "Eh? No results?", !
-		return
+		throw ##class(%Exception.SQL).CreateFromSQLCODE(result.%SQLCODE,
+			"failed to retrieve list of classes for package " _ pkg)
 	}
 	
 	#dim position as %Integer
 	#dim value as %CacheString
 	
-	set position = ""
-	
-	while (1) {
-		set value = result.%NextOutputValue(.position)
-		if (position = "") {
-			return
-		}
-		w value, !
-		do ..classList.Insert(value)
+	while (result.%Next()) {
+		do ..classList.Insert(result.id)
 	}
 }
 
