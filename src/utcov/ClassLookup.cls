@@ -5,6 +5,8 @@ Parameter CLSTYPE As %String [ Final, Internal ] = "CLS";
 
 Parameter PKGTYPE As %String [ Final, Internal ] = "PKG";
 
+Parameter UTCLASS As %String [ Final, Internal ] = "%UnitTest.TestCase";
+
 Property cfg As utcov.Configuration [ Private ];
 
 Property classList As %ListOfDataTypes;
@@ -72,14 +74,8 @@ Method retrieveClassesFromProject(project As %Studio.Project) [ Private ]
 	} while (key '= "")
 }
 
-Method addClassesFromPackage(pkg As %String)
+Method addClassesFromPackage(pkg As %String) [ Private ]
 {
-	// FIXME: is the test correct?
-	if ($find(pkg, "%") = 1) {
-		new $namespace
-		znspace "%SYS"
-	}
-	
 	#dim result as %SQL.StatementResult
 	
 	set result = ##class(%SQL.Statement).%ExecDirect(, 
@@ -98,6 +94,41 @@ Method addClassesFromPackage(pkg As %String)
 	while (result.%Next()) {
 		do ..classList.Insert(result.id)
 	}
+}
+
+Method isTestClass(className As %String) As %Boolean
+{
+	if (className = ..#UTCLASS) {
+		return 1
+	}
+	
+	#dim c as %Dictionary.ClassDefinition
+	#dim status as %Status
+		
+	set c = ##class(%Dictionary.ClassDefinition).%OpenId(className,,.status)
+	
+	if ($$$ISERR(status)) {
+		throw ##class(%Exception.StatusException).CreateFromStatus(status)
+	}
+	
+	if ('c.SuperIsDefined()) {
+		return 0
+	}
+	
+	#dim children
+	#dim len as %Integer
+	#dim i as %Integer
+	
+	set children = $listFromString(c.Super, ",")
+	set len = $listLength(children)
+	
+	for i = 1:1:len {
+		if ..isTestClass($listGet(children, i)) {
+			return 1
+		}
+	}
+	
+	return 0
 }
 
 }
