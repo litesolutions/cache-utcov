@@ -53,6 +53,7 @@ Method retrieveClassesFromProject(project As %Studio.Project) [ Private ]
 {
 	#dim key as %String
 	#dim item as %Studio.ProjectItem
+	#dim name as %String
 	
 	set key = ""
 	do {
@@ -62,13 +63,15 @@ Method retrieveClassesFromProject(project As %Studio.Project) [ Private ]
 			continue
 		}
 		
+		set name = item.Name
+		
 		if (item.Type = ..#CLSTYPE) {
-			do ..classList.Insert(item.Name)
+			do ..doInsert(name)
 			continue
 		}
 		
 		if (item.Type = ..#PKGTYPE) {
-			do ..addClassesFromPackage(item.Name)
+			do ..addClassesFromPackage(name)
 		}
 		
 	} while (key '= "")
@@ -79,7 +82,7 @@ Method addClassesFromPackage(pkg As %String) [ Private ]
 	#dim result as %SQL.StatementResult
 	
 	set result = ##class(%SQL.Statement).%ExecDirect(, 
-		"select id from %Dictionary.ClassDefinition where id %STARTSWITH ?",
+		"select Name from %Dictionary.ClassDefinition where Name %STARTSWITH ?",
 		pkg _ "."
 	)
 	
@@ -92,12 +95,15 @@ Method addClassesFromPackage(pkg As %String) [ Private ]
 	#dim value as %CacheString
 	
 	while (result.%Next()) {
-		do ..classList.Insert(result.id)
+		do ..doInsert(result.Name)
 	}
 }
 
-Method isTestClass(className As %String) As %Boolean
+Method isTestClass(className As %String) As %Boolean [ Private ]
 {
+	#if 0
+	w "Testing classname -->" _ className _ "<--", !
+	
 	if (className = ..#UTCLASS) {
 		return 1
 	}
@@ -108,10 +114,17 @@ Method isTestClass(className As %String) As %Boolean
 	set c = ##class(%Dictionary.ClassDefinition).%OpenId(className,,.status)
 	
 	if ($$$ISERR(status)) {
-		throw ##class(%Exception.StatusException).CreateFromStatus(status)
+		#dim firstChar as %String = $extract(className)
+		if (firstChar '= "%") {
+			throw ##class(%Exception.StatusException).CreateFromStatus(status)
+		} else {
+			return ..isTestClass(firstChar _ "Library." _ $extract(className, 2))
+		}
 	}
 	
-	if ('c.SuperIsDefined()) {
+	#dim super as %String = c.Super
+	
+	if (super = "") {
 		return 0
 	}
 	
@@ -122,13 +135,20 @@ Method isTestClass(className As %String) As %Boolean
 	set children = $listFromString(c.Super, ",")
 	set len = $listLength(children)
 	
-	for i = 1:1:len {
-		if ..isTestClass($listGet(children, i)) {
+	for index = 1:1:len {
+		if ..isTestClass($listGet(children, index)) {
 			return 1
 		}
 	}
 	
 	return 0
+}
+
+Method doInsert(className As %String) [ Private ]
+{
+	#dim testClass as %Boolean = ..isTestClass(className)
+	
+	do ..classList.Insert(className _ ": " _ testClass)
 }
 
 }
