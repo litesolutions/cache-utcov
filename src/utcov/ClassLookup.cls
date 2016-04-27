@@ -101,7 +101,6 @@ Method addClassesFromPackage(pkg As %String) [ Private ]
 
 Method isTestClass(className As %String) As %Boolean [ Private ]
 {
-	#if 0
 	w "Testing classname -->" _ className _ "<--", !
 
 	if (className = ..#UTCLASS) {
@@ -118,7 +117,10 @@ Method isTestClass(className As %String) As %Boolean [ Private ]
 		if (firstChar '= "%") {
 			throw ##class(%Exception.StatusException).CreateFromStatus(status)
 		} else {
-			return ..isTestClass(firstChar _ "Library." _ $extract(className, 2))
+			return $case($find(className, "%Library."),
+				0:0,
+				:..isTestClass(firstChar _ "Library." _ $extract(className, 2))
+			)
 		}
 	}
 
