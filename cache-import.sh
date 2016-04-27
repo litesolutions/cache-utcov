@@ -31,11 +31,26 @@ echo
 java -jar $CACHE_IMPORT_JAR export cfg=cache-import.properties \
     user="$USER" password="$PASSWORD"
 
+if [ "$?" != "0" ]; then
+    echo >&2 "Failed to retrieve sources :( Please check the stack trace above"
+    exit 1
+fi
+
 #
 # Another limitation...
 #
 
-if [ "$?" = "0" ]; then
-    rm -rf src/INFORMATION
-fi
+# No idea why, we always get this... We don't want it
+
+rm -rf src/INFORMATION
+
+#
+# Also, clean up the files:
+#
+# * clear all spaces at the end of lines;
+# * turn crlf into lf all around
+#
+
+find src -type f -exec dos2unix {} \;
+find src -type f -exec sed -i 's,\s\+$,,' {} \;
 
