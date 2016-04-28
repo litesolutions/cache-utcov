@@ -10,17 +10,13 @@ ClassMethod m2()
 	set cfg.namespace = "USER"
 	set cfg.projectName = "cache-tort-git"
 
-	#dim classLookup as utcov.ClassLookup
+	#dim classLookup as utcov.ClassLookup2
 
-	set classLookup = ##class(utcov.ClassLookup).%New(cfg)
+	set classLookup = ##class(utcov.ClassLookup2).fromConfiguration(cfg)
 
-	#dim list as %ListOfDataTypes = classLookup.classList
+	#dim repo as utcov.ClassRepository = classLookup.computeClassRepository()
 
-	#dim i as %Integer
-
-	for i = 1:1:list.Count() {
-		w list.GetAt(i), !
-	}
+	zwrite repo
 }
 
 }

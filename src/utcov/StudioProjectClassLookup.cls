@@ -7,20 +7,19 @@ Parameter PKGTYPE As %String [ Final, Internal ] = "PKG";
 
 Property projectName As %String [ Private, Required ];
 
-Method %OnNew(cfg As utcov.Configuration) As %Status [ Private, ServerOnly = 1 ]
+Method %OnNew(cfg As utcov.Configuration) As %Status
 {
+	do ##super(cfg)
 	set ..projectName = cfg.projectName
 	return $$$OK
 }
 
-Method doComputeClassRepository() [ Final ]
+Method doComputeClassRepository()
 {
 	#dim repository as utcov.ClassRepository = ##class(utcov.ClassRepository).%New()
 
 	set repository.namespace = ..namespace
 
-	#dim productionClasses as %ListOfDataTypes = ##class(%ListOfDataTypes).%New()
-	#dim testClasses as %ListOfDataTypes = ##class(%ListOfDataTypes).%New()
 	#dim project as %Studio.Project
 	#dim status as %Status
 

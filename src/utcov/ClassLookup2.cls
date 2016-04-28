@@ -3,13 +3,23 @@ Class utcov.ClassLookup2 [ Abstract ]
 
 Parameter UTCLASS As %String [ Final, Internal ] = "%UnitTest.TestCase";
 
-Property namespace As %String [ Required ];
+Property namespace As %String;
 
-Property repository As utcov.ClassRepository [ InitialExpression = {##class(utcov.ClassRepository).%New()} ];
+Property repository As utcov.ClassRepository;
 
-Method %OnNew(cfg As utcov.Configuration) As %Status [ Private, ServerOnly = 1 ]
+ClassMethod fromConfiguration(cfg As utcov.Configuration) As utcov.ClassLookup2
+{
+	if ('cfg) {
+		throw ##class(%Exception.General).%New("configuration must not be null", -1)
+	}
+
+	return ##class(utcov.StudioProjectClassLookup).%New(cfg)
+}
+
+Method %OnNew(cfg As utcov.Configuration) As %Status
 {
 	set ..namespace = cfg.namespace
+	set ..repository = ##class(utcov.ClassRepository).%New()
 	set ..repository.namespace = cfg.namespace
 	return $$$OK
 }
@@ -53,6 +63,20 @@ Method isTestClass(className As %String) As %Boolean [ Final, Private ]
 	set c = ##class(%Dictionary.ClassDefinition).%OpenId(className,,.status)
 
 	if ($$$ISERR(status)) {
+		/*
+		 * We have to extract the first character of the class name here.
+		 *
+		 * If it's a percent sign (%), then there is a chance that in fact %Foo
+		 * does not exist, but %Library.Foo does.
+		 *
+		 * Therefore the algorithm is:
+		 *
+		 * - if the first character is not a % then there is no such class,
+		 *   this is an error;
+		 * - if it is a percent, we check whether it is already %Library.xxx;
+		 *   if it is not, we reissue a call to this method with %Library.Foo
+		 *   instead of %Foo.
+		 */
 		#dim firstChar as %String = $extract(className)
 		if (firstChar '= "%") {
 			throw ##class(%Exception.StatusException).CreateFromStatus(status)
