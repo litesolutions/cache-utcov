@@ -1,4 +1,4 @@
-Class utcov.Test Extends %RegisteredObject
+Class utcov.Main Extends %RegisteredObject
 {
 
 ClassMethod m3()
