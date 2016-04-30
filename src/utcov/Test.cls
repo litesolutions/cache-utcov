@@ -1,7 +1,7 @@
 Class utcov.Test Extends %RegisteredObject
 {
 
-ClassMethod m2()
+ClassMethod m3()
 {
 	#dim cfg as utcov.Configuration
 
@@ -10,13 +10,41 @@ ClassMethod m2()
 	set cfg.namespace = "USER"
 	set cfg.projectName = "cache-tort-git"
 
-	#dim classLookup as utcov.ClassLookup2
+	#dim repo as utcov.ClassRepository = ..run(cfg)
 
-	set classLookup = ##class(utcov.ClassLookup2).fromConfiguration(cfg)
+	do ..writeList(repo.productionClasses)
+	do ..writeList(repo.testClasses)
+}
 
-	#dim repo as utcov.ClassRepository = classLookup.computeClassRepository()
+ClassMethod run(cfg As utcov.Configuration) As utcov.ClassRepository
+{
+	#dim classLookup as utcov.AbstractClassLookup
 
-	zwrite repo
+	set classLookup = ##class(utcov.StudioProjectLookup).%New(cfg.projectName)
+
+	#dim repo as utcov.ClassRepository = ##class(utcov.ClassRepository).%New()
+	#dim productionClasses as %ListOfDataTypes = ##class(%ListOfDataTypes).%New()
+	#dim testClasses as %ListOfDataTypes = ##class(%ListOfDataTypes).%New()
+
+	set repo.productionClasses = productionClasses
+	set repo.testClasses = testClasses
+
+	new $namespace
+	set $namespace = cfg.namespace
+
+	do classLookup.collectClasses(productionClasses, testClasses)
+
+	return repo
+}
+
+ClassMethod writeList(list As %ListOfDataTypes)
+{
+	#dim len as %Integer = list.Count()
+	#dim index as %Integer
+
+	for index=1:1:len {
+		write list.GetAt(index)
+	}
 }
 
 }

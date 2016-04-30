@@ -1,39 +1,29 @@
-Class utcov.StudioProjectClassLookup Extends utcov.ClassLookup2 [ Final ]
+Class utcov.StudioProjectLookup Extends (utcov.AbstractClassLookup, %Library.RegisteredObject) [ Final ]
 {
 
 Parameter CLSTYPE As %String [ Final, Internal ] = "CLS";
 
 Parameter PKGTYPE As %String [ Final, Internal ] = "PKG";
 
-Property projectName As %String [ Private, Required ];
+Property projectName As %String;
 
-Method %OnNew(cfg As utcov.Configuration) As %Status
+Method %OnNew(projectName As %String) As %Status [ Private, ServerOnly = 1 ]
 {
-	do ##super(cfg)
-	set ..projectName = cfg.projectName
+	set ..projectName = projectName
 	return $$$OK
 }
 
-Method doComputeClassRepository()
+Method collectClasses(productionClasses As %ListOfDataTypes, testClasses As %ListOfDataTypes)
 {
-	#dim repository as utcov.ClassRepository = ##class(utcov.ClassRepository).%New()
-
-	set repository.namespace = ..namespace
-
 	#dim project as %Studio.Project
 	#dim status as %Status
 
-	set project = ##class(%Studio.Project).%OpenId(..projectName, /* default */, .status)
+	set project = ##class(%Studio.Project).%OpenId(..projectName,,.status)
 
 	if ($$$ISERR(status)) {
 		throw ##class(%Exception.StatusException).CreateFromStatus(status)
 	}
 
-	do ..retrieveClassesFromProject(project)
-}
-
-Method retrieveClassesFromProject(project As %Studio.Project) [ Private ]
-{
 	#dim key as %String
 	#dim item as %Studio.ProjectItem
 	#dim name as %String
@@ -49,18 +39,18 @@ Method retrieveClassesFromProject(project As %Studio.Project) [ Private ]
 		set name = item.Name
 
 		if (item.Type = ..#CLSTYPE) {
-			do ..addClass(name)
+			do ..addClass(name, productionClasses, testClasses)
 			continue
 		}
 
 		if (item.Type = ..#PKGTYPE) {
-			do ..addClassesFromPackage(name)
+			do ..addClassesFromPackage(name, productionClasses, testClasses)
 		}
 
 	} while (key '= "")
 }
 
-Method addClassesFromPackage(pkg As %String) [ Private ]
+Method addClassesFromPackage(pkg As %String, productionClasses As %ListOfDataTypes, testClasses As %ListOfDataTypes) [ Final, Private ]
 {
 	#dim result as %SQL.StatementResult
 
@@ -74,11 +64,8 @@ Method addClassesFromPackage(pkg As %String) [ Private ]
 			"failed to retrieve list of classes for package " _ pkg)
 	}
 
-	#dim position as %Integer
-	#dim value as %CacheString
-
 	while (result.%Next()) {
-		do ..addClass(result.Name)
+		do ..addClass(result.Name, productionClasses, testClasses)
 	}
 }
 
