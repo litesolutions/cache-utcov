@@ -71,7 +71,8 @@ ClassMethod ConvertToClassCoverage(pTestIndex As %String)
 			While (tResLines.%Next(.tSC)) {
 				$$$ThrowOnError(tSC)
 				Kill tMap
-				$$$ThrowOnError(##class(%Studio.Debugger).SourceLine(tRtnName, tResLines.%Get("LineNumber"), 1, tResLines.%Get("LineNumber"), $Length(..GetLineText(tRtnName,"int",tResLines.%Get("LineNumber"))), $Namespace, .tMap))
+				Set tLineNumber = tResLines.%Get("LineNumber")
+				$$$ThrowOnError(##class(%Studio.Debugger).SourceLine(tRtnName, tLineNumber, 1, tLineNumber, $Length(..GetLineText(tRtnName,"int",tLineNumber)), $Namespace, .tMap))
 				
 				If $Data(tMap("CLS",1),tData1) && $Data(tMap("CLS",2),tData2) {
 					Set $ListBuild(tClass1,tMethod1,tLine1) = tData1
@@ -79,22 +80,22 @@ ClassMethod ConvertToClassCoverage(pTestIndex As %String)
 					If $Data(tMethodMaps(tOther,tMethod1),tMethodOffset) {
 						For tLine = tLine1:1:tLine2 {
 							Set tClassLine = tMethodOffset+1+tLine
-							&sql(update utcov.Data
+							&sql(update utcov.Data D
 								set LineCovered = 1
 								where TestIndex = :pTestIndex
 									and RoutineType = 'cls'
 									and RoutineName = :tClassName
 									and LineNumber = :tClassLine
-									/*and exists (
+									and exists (
 										select top 1 1 from utcov.Data OTHER
 										where OTHER.TestIndex = :pTestIndex
 											and OTHER.RoutineType = 'int'
 											and OTHER.RoutineName = :tRtnName
-											and OTHER.LineNumber = :tRes.%Get("LineNumber")
+											and OTHER.LineNumber = :tLineNumber
 											and OTHER.LineCovered = 1
 											and OTHER.TestClass = D.TestClass
 											and OTHER.TestMethod = D.TestMethod
-									)*/
+									)
 							)
 							If (SQLCODE < 0) {
 								Throw ##class(%Exception.SQL).CreateFromSQLCODE(SQLCODE,%msg)

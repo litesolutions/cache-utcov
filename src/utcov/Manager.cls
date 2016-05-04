@@ -12,7 +12,7 @@ Property CurrentTestMethod As %String(MAXLEN = 255) [ Internal, Private ];
 
 /// Invoked externally to run all unit tests.
 /// Presupposes that unit tests have been included in the build.
-ClassMethod RunAllTests(pPackage As %String = "", pLogFile As %String = "", pUnitTestClasses As %List = "", pCoverageClasses As %List = "", pCoverageRoutines As %List = "") As %Status
+ClassMethod RunAllTests(pPackage As %String = "", pLogFile As %String = "", pUnitTestClasses As %List = "", pCoverageClasses As %List = "", pCoverageRoutines As %List = "", pCoverageLevel As %Integer = 0) As %Status
 {
 	#dim tUnitTestManager As utcov.Manager
 	Set tSuccess = 1
@@ -32,6 +32,7 @@ ClassMethod RunAllTests(pPackage As %String = "", pLogFile As %String = "", pUni
 		Set tUnitTestManager = ..%New()
 		Set tUnitTestManager.Display = "log,error"
 		Do tUnitTestManager.SetCoverageTargets(pCoverageClasses,pCoverageRoutines)
+		Set tUnitTestManager.CoverageDetail = pCoverageLevel
 		Set tStmt = ##class(%SQL.Statement).%New()
 		$$$ThrowOnError(tStmt.%PrepareClassQuery("%Dictionary.ClassDefinition","SubclassOf"))
 		Set tRes = tStmt.%Execute("%UnitTest.TestCase",pPackage)
