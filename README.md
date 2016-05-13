@@ -1,7 +1,6 @@
 ## What this is
 
-The goal of this package is to provide a framework, runnable from at least the
-Caché terminal, to be able to:
+The goal of this package is to provide a library to:
 
 * run unit tests on a particular project, and
 * collect code coverage information.
@@ -18,11 +17,40 @@ a convenient way to link unit test execution and code coverage.
 
 This package intends to fill the gap.
 
-## How
+## Projected design
 
-At this point in time, the mechanism is not fully defined.
+This package should be able to perform the following:
 
-It is known however that Caché has what it takes to perform the task:
+* accept a user-supplied configuration defining where the "production" and
+  "test" classes are;
+* given this configuration, run the unit tests and collect the results;
+* be able to export these results to third parties.
+
+
+### Data collection
+
+For data collection, the plan is to:
+
+* collect all classes according to the configuration;
+* split apart classes extending
+* [`%UnitTest.TestCase`](http://docs.intersystems.com/latest/csp/documatic/%25CSP.Documatic.cls?PAGE=CLASS&LIBRARY=%25SYS&CLASSNAME=%25UnitTest.TestCase)
+  and flag them as unit tests;
+* run all unit tests, collect the data (TODO: how?).
+
+### Exporting
+
+This is one part which is yet to be defined.
+
+The prior objective of this package is to make the data available to [Caché
+Quality](https://www.cachequality.com) ([demo](https://demo.cachequality.com)),
+and it is written in Java...
+
+Therefore it means that the Java side must be able to collect this data. One
+possibility is to use the provided Caché jars, but that is not the only
+possibility: one could also imagine collecting this data via a provided REST
+API.
+
+## Some links
 
 * [The %Studio.Project
   class](http://docs.intersystems.com/latest/csp/documatic/%25CSP.Documatic.cls?PAGE=CLASS&LIBRARY=%25SYS&CLASSNAME=%25Studio.Project)
@@ -33,9 +61,6 @@ It is known however that Caché has what it takes to perform the task:
   command](http://docs.intersystems.com/latest/csp/docbook/DocBook.UI.Page.cls?KEY=RCOS_czbreak)
   can be used to collect traces in INT code in a non interactive manner, and to
   a dedicated device (and that includes a file): `zbreak /TRACE:ON:thefile`.
-
-Those two elements and others can be used to perform a full unit test run and
-coverage report.
 
 ## Help needed
 
